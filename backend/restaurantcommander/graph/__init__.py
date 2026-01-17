@@ -1,6 +1,5 @@
 # Graph main
 
-import uuid
 import networkx as nx
 
 # An edge represents a step from one ingredient to another
@@ -25,14 +24,12 @@ class Node:
 # product
 class Graph:
     name: str
-    ingredients: list[int]
-    product: int
     nodes: dict[int, Node]
     graph: nx.DiGraph
 
-    def __init__(self, name: str, ingredients: list[int], product: int) -> None:
+    def __init__(self, name: str, nodes: dict[int, Node], graph: nx.DiGraph) -> None:
         self.name = name
-        self.ingredients = ingredients
-        self.product = product
+        self.nodes = nodes 
+        self.graph = graph 
 
 
