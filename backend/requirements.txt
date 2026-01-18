@@ -3,3 +3,5 @@ graphviz
 networkx
 openrouter
 python-dotenv
+google-genai
+pydot

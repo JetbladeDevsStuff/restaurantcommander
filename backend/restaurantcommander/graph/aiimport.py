@@ -1,12 +1,12 @@
 import os
 from typing import List
 from pydantic import BaseModel
-from google import gemini
+from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
 
-from graph_manual_import import graph_from_dict  # no leading dot
+from .manualimport import graph_from_dict  # no leading dot
 
 
 class GraphEdgeModel(BaseModel):
@@ -52,7 +52,7 @@ async def graph_from_description_ai(description: str):
 
     async with genai.Client(api_key=api_key).aio as client:
         response = await client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=f"{SYSTEM_RULES}\n\nRECIPE:\n{description}",
             config={
                 "response_mime_type": "application/json",

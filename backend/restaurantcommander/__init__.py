@@ -76,12 +76,13 @@ def read_root():
 
 @app.post("/user/{user_id}/username")
 def set_username(user_id: int, username: str):
+    # FIXME: AttributeError: 'State' object has no attribute 'chefs'
     curstate.chefs[user_id].name = username
-
 
 
 @app.post("/user/new")
 def make_user():
+    # TODO: Return the new user's ID
     curstate.chefs.append(Chef())
 
 class SetManual(BaseModel):
@@ -107,6 +108,6 @@ async def recipe_set_ai(model: SetAI):
 
 
 @app.get("/recipe/visualize")
-async def recipe_visualize() -> str:
+def recipe_visualize() -> str:
     namedgraph = networkx.relabel_nodes(curstate.recipe.graph, {node: curstate.recipe.nodes[node].ingredient for node in curstate.recipe.graph.nodes})
     return networkx.nx_pydot.to_pydot(namedgraph).to_string()
