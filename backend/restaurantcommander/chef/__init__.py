@@ -10,6 +10,11 @@ class Chef:
     tasks: list[str]
     step: int
 
+    def __init__(self) -> None:
+        self.name = "Chef"
+        self.tasks = list()
+        self.step = 0
+
 
 def create_stepgraph(graph: Graph) -> nx.DiGraph:
     step_graph = nx.line_graph(graph.graph)

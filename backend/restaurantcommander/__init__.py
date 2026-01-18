@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
@@ -17,6 +18,9 @@ app = FastAPI()
 curstate = State()
 
 load_dotenv()
+
+
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"])
 
 
 @app.get("/")
@@ -58,12 +62,31 @@ def read_root():
 #     return {"message": "Step completed!", "user_progress": user_progress[user_id]}
 
 
+@app.get("/progress")
+def get_progress():
+    num = 0
+    dem = 0
+    for chef in curstate.chefs:
+        num += chef.step
+        dem += len(chef.tasks)
+    try:
+        return {"num": num, "dem": dem, "dec": num/dem}
+    except ZeroDivisionError:
+        return {"num": num, "dem": dem, "dec": 1}
+
+
+@app.get("/user/num")
+def get_num_users() -> int:
+    return len(curstate.chefs)
+
+
 @app.get("/user/{user_id}")
 def get_user(user_id: int):
     if user_id > len(curstate.chefs):
         raise HTTPException(status_code=404, detail="user_id not found")
     name = curstate.chefs[user_id].name
-    return {"user_id": user_id, "username": name}
+    step = curstate.chefs[user_id].step
+    return {"user_id": user_id, "username": name, "step": step}
 
 
 @app.get("/user/{user_id}/tasks")
@@ -71,6 +94,21 @@ def get_user_tasks(user_id: int):
     if user_id < 0 or user_id >= len(curstate.chefs):
         raise HTTPException(status_code=404, detail="user_id not found")
     return curstate.chefs[user_id].tasks
+
+
+@app.get("/user/{user_id}/step")
+def get_user_step(user_id: int):
+    if user_id > len(curstate.chefs):
+        raise HTTPException(status_code=404, detail="user_id not found")
+    return curstate.chefs[user_id].step
+
+
+@app.post("/user/{user_id}/complete/{step_num}")
+def post_user_task_complete(user_id: int, step_num: int):
+    if user_id > len(curstate.chefs):
+        raise HTTPException(status_code=404, detail="user_id not found")
+    curstate.chefs[user_id].step = step_num
+
 
 class SetUsername(BaseModel):
     username: str
@@ -87,8 +125,8 @@ def make_user():
     curstate.chefs.append(Chef())
     id = len(curstate.chefs) - 1
     curstate.chefs[id].name = f"Chef {id}"
-    recipe_split_to_chefs()
-    return {"user_id": id, "username": f"Chef {id}"}
+    curstate.chefs[id].step = 0
+    return {"user_id": id, "username": f"Chef {id}", "step": 0}
 
 
 @app.delete("/user/delete")

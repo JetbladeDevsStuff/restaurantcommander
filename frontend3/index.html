@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Restaurantcommander UI</title>
+		<script src="index.js" defer></script>
+		<link rel="stylesheet" href="main.css" />
+	</head>
+	<body>
+		<main>
+			<div id="numchefs">Loading...</div>
+			<div id="recipe">Loading...</div>
+			<div id="chefdisplay">Loading...</div>
+			<div id="progress">Loading...</div>
+			<button id="configure">Configure</button>
+			<button id="reset">Reset</button>
+		</main>
+		<dialog id="dialog">
+			<p>Configuration...</p>
+			<div>
+				<button id="chefSubtract">-</button>
+				<div id="chefCurrent">0</div>
+				<button id="chefAdd">+</button>
+			</div>
+			<div class="recipeChanger">
+				<button id="mealdbButton">MealDB</button>
+				<button id="aiButton">Recipe AI</button>
+				<button id="manualButton">Manual</button>
+				<div id="content">Select an option</div>
+			</div>
+			<button id="backButton">Back</button>
+			<button id="submitButton">Submit</button>
+		</dialog>
+	</body>
+</html>
