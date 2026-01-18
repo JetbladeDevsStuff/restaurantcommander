@@ -91,6 +91,7 @@ def get_user(user_id: int):
 
 @app.get("/user/{user_id}/tasks")
 def get_user_tasks(user_id: int):
+    recipe_split_to_chefs()
     if user_id < 0 or user_id >= len(curstate.chefs):
         raise HTTPException(status_code=404, detail="user_id not found")
     return curstate.chefs[user_id].tasks
@@ -126,6 +127,7 @@ def make_user():
     id = len(curstate.chefs) - 1
     curstate.chefs[id].name = f"Chef {id}"
     curstate.chefs[id].step = 0
+    recipe_split_to_chefs()
     return {"user_id": id, "username": f"Chef {id}", "step": 0}
 
 

@@ -48,7 +48,14 @@ function loadChefDisplay() {
 			if (!v.ok) {
 				element.innerText = "Failed";
 			} else {
-				element.innerText = v.json()
+				v.json().then((v) => {
+					element.innerHTML = ""
+					let text = ""
+					for (const e of v) {
+						text += e + "<br>";
+					}
+					element.innerHTML += `Chef ${i}: ${text}<br>`
+				});
 			}
 		});
 	}
@@ -79,9 +86,6 @@ function pressReset() {
 }
 
 function decreaseChefs() {
-	const element = document.getElementById("chefCurrent");
-	numChefs--;
-	element.innerText = numChefs;
 	const deleteUrl = new URL("/user/delete", BASE_URL);
 	fetch(deleteUrl, {method: "DELETE"}).then((v) => {
 		if (!v.ok) {
@@ -92,8 +96,6 @@ function decreaseChefs() {
 }
 
 function increaseChefs() {
-	const element = document.getElementById("chefCurrent");
-	numChefs++;
 	const addUrl = new URL("/user/new", BASE_URL);
 	fetch(addUrl, {method: "POST"}).then((v) => {
 		if (!v.ok) {
@@ -117,7 +119,7 @@ function finalizeImport() {
 	const urlAi = new URL("/recipe/set/ai", BASE_URL);
 	if (selectedText["provider"] === "mealdb") {
 		fetch(urlMealdb, {
-			method: "POST", body: JSON.stringify({"name": selectedText["text"]})
+			method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({"name": selectedText["text"]})
 		}).then((v) => {
 			if (!v.ok) {
 				console.error("FAIL")
@@ -220,5 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
 	loadRecipeName();
 	loadChefDisplay();
 	loadProgress();
+
+	setTimeout(loadChefDisplay, 1000);
 });
 

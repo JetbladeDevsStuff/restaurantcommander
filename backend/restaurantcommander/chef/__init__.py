@@ -16,10 +16,22 @@ class Chef:
         self.step = 0
 
 
+
 def create_stepgraph(graph: Graph) -> nx.DiGraph:
     step_graph = nx.line_graph(graph.graph)
-    # FIXME: This is probably wrong!!!
-    return nx.relabel_nodes(step_graph, {edge: graph.graph.edges[edge].get("data", edge).process for edge in graph.graph.edges})
+
+    def edge_label(edge):
+        edge_data = graph.graph.edges[edge]
+        process = getattr(edge_data.get("data"), "process", str(edge))
+        
+        # Inputs are the source nodes of this edge
+        source_node_idx = edge[0]  # in a line_graph edge, it's a tuple of original nodes
+        source_ingredient = graph.nodes[source_node_idx].ingredient
+        return f"{process} ({source_ingredient})"
+
+    return nx.relabel_nodes(step_graph, {edge: edge_label(edge) for edge in graph.graph.edges})
+
+
 
 
 def topo_layers(G: nx.DiGraph) -> list:
@@ -52,7 +64,7 @@ def split_graph_among_chefs(graph: Graph, chefs: list[Chef]) -> list[Chef]:
         for i in layer:
             chefs[on_chef_idx].tasks.append(i)
             on_chef_idx += 1
-            if on_chef_idx > len(chefs):
+            if on_chef_idx > len(chefs) - 1:
                 on_chef_idx = 0
 
     return chefs
