@@ -10,6 +10,7 @@ class Chef:
     tasks: list[str]
     step: int
 
+
 def create_stepgraph(graph: Graph) -> nx.DiGraph:
     step_graph = nx.line_graph(graph.graph)
     # FIXME: This is probably wrong!!!

@@ -1,5 +1,6 @@
-from fastapi import FastAPI
-from pydantic import AnyHttpUrl, BaseModel, TypeAdapter
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import PlainTextResponse
+from pydantic import BaseModel
 from dotenv import load_dotenv
 
 from restaurantcommander.chef import Chef
@@ -7,31 +8,13 @@ from restaurantcommander.chef import Chef
 from .state import State
 from .graph.manualimport import GraphDict, graph_from_dict
 from .graph.aiimport import graph_from_description_ai
+from .chef import create_stepgraph, split_graph_among_chefs, topo_layers
 
 import networkx
 
 app = FastAPI()
 curstate = State()
 
-# Draft AI-generated recipe data (mock)
-recipe_data = {
-    "recipe_title": "Pizza Express Margherita",
-    "tasks": {
-        "user_001": [
-            "Spread passata on dough",
-            "Add mozzarella and seasoning",
-            "Preheat oven",
-            "Bake pizza"
-        ],
-        "user_002": [
-            "Prepare dough",
-            "Chop basil",
-            "Arrange toppings"
-        ]
-    }
-}
-
-# Track user progress
 load_dotenv()
 
 
@@ -74,25 +57,61 @@ def read_root():
 #     return {"message": "Step completed!", "user_progress": user_progress[user_id]}
 
 
+@app.get("/user/{user_id}")
+def get_user(user_id: int):
+    if user_id > len(curstate.chefs):
+        raise HTTPException(status_code=404, detail="user_id not found")
+    name = curstate.chefs[user_id].name
+    return {"user_id": user_id, "username": name}
+
+
+@app.get("/user/{user_id}/tasks")
+def get_user_tasks(user_id: int):
+    if user_id > len(curstate.chefs):
+        raise HTTPException(status_code=404, detail="user_id not found")
+    return curstate.chefs[user_id].tasks
+
+class SetUsername(BaseModel):
+    username: str
+
 @app.post("/user/{user_id}/username")
-def set_username(user_id: int, username: str):
-    # FIXME: AttributeError: 'State' object has no attribute 'chefs'
-    curstate.chefs[user_id].name = username
+def set_username(user_id: int, username: SetUsername):
+    if user_id > len(curstate.chefs):
+        raise HTTPException(status_code=404, detail="user_id not found")
+    curstate.chefs[user_id].name = username.username
 
 
 @app.post("/user/new")
 def make_user():
-    # TODO: Return the new user's ID
     curstate.chefs.append(Chef())
+    id = len(curstate.chefs) - 1
+    curstate.chefs[id].name = f"Chef {id}"
+    return {"user_id": id, "username": f"Chef {id}"}
+
+
+@app.delete("/user/delete")
+def delete_user():
+    if not curstate.chefs:
+        raise HTTPException(status_code=404, detail="No users")
+    chef = curstate.chefs.pop()
+    return {"user_id": len(curstate.chefs), "username": chef.name}
+
 
 class SetManual(BaseModel):
     # image: AnyHttpUrl
     recipe: GraphDict
 
 
+# Updates curstate.chefs with the new recipe
+def recipe_split_to_chefs():
+    # TODO: This
+    pass
+
+
 @app.post("/recipe/set/manual")
 def recipe_set_manual(recipe: SetManual):
     curstate.recipe = graph_from_dict(recipe.recipe)
+    recipe_split_to_chefs()
 
 
 class SetAI(BaseModel):
@@ -103,11 +122,40 @@ class SetAI(BaseModel):
 @app.post("/recipe/set/ai")
 async def recipe_set_ai(model: SetAI):
     curstate.recipe = await graph_from_description_ai(model.description)
+    recipe_split_to_chefs()
     # curstate.recipe.name = model.name
     # curstate.recipe.image = model.image
 
+class SetMealDB(BaseModel):
+    name: str
 
-@app.get("/recipe/visualize")
-def recipe_visualize() -> str:
+
+@app.post("/recipe/set/mealdb")
+async def recipe_set_mealdb(name: SetMealDB):
+    # TODO: This
+    pass
+
+
+@app.get("/recipe")
+def recipe():
+    return {"name": curstate.recipe.name}
+
+
+@app.get("/recipe/visualize", response_class=PlainTextResponse)
+def recipe_visualize():
+    # TODO: get edges here?
     namedgraph = networkx.relabel_nodes(curstate.recipe.graph, {node: curstate.recipe.nodes[node].ingredient for node in curstate.recipe.graph.nodes})
     return networkx.nx_pydot.to_pydot(namedgraph).to_string()
+
+
+@app.get("/recipe/visualize/stepgraph", response_class=PlainTextResponse)
+def recipe_visualize_stepgraph():
+    stepgraph = create_stepgraph(curstate.recipe)
+    return networkx.nx_pydot.to_pydot(stepgraph).to_string()
+
+
+@app.get("/recipe/visualize/topo")
+def recipe_visualize_topograph():
+    stepgraph = create_stepgraph(curstate.recipe)
+    return topo_layers(stepgraph)
+
