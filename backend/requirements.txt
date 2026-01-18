@@ -5,3 +5,4 @@ openrouter
 python-dotenv
 google-genai
 pydot
+requests

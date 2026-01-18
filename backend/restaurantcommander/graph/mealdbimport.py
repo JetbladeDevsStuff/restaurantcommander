@@ -1,5 +1,7 @@
 import requests
-import json
+
+from . import Graph
+from .aiimport import graph_from_description_ai
 
 def get_recipe_by_name(name):
     url = f"https://www.themealdb.com/api/json/v1/1/search.php?s={name.replace(' ', '%20')}"
@@ -7,8 +9,7 @@ def get_recipe_by_name(name):
     data = response.json()
 
     if not data["meals"]:
-        print("Recipe not found.")
-        return None
+        raise RuntimeError(f"Recipe \"{name}\" not found.")
 
     meal = data["meals"][0]
 
@@ -33,15 +34,6 @@ def get_recipe_by_name(name):
     }
     return ai_ready_json
 
-# -----------------------------
-# Interactive input
-recipe_name = input("Enter the recipe name: ")
-recipe_json = get_recipe_by_name(recipe_name)
-
-if recipe_json:
-    print("Recipe JSON ready for AI:\n")
-    print(json.dumps(recipe_json, indent=2))
-
-    with open("recipe.json", "w", encoding="utf-8") as f:
-        json.dump(recipe_json, f, indent=2, ensure_ascii=False)
-    print("\nRecipe JSON saved to recipe.json")
+async def graph_from_mealdb(name: str) -> Graph:
+    recipe = get_recipe_by_name(name)
+    return await graph_from_description_ai(recipe["instructions"])

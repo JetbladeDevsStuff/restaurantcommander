@@ -61,5 +61,7 @@ async def graph_from_description_ai(description: str):
         )
 
     graph_model = GraphDictModel.model_validate_json(response.text)
-    return graph_from_dict(graph_model.model_dump())
+    dump = graph_model.model_dump()
+    print(dump)
+    return graph_from_dict(dump)
 
