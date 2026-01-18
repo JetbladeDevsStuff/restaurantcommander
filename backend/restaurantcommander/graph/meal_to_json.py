@@ -29,7 +29,6 @@ def get_recipe_by_name(name):
         "cuisine": meal.get("strArea"),
         "ingredients": ingredients,
         "instructions": meal.get("strInstructions"),
-        "image": meal.get("strMealThumb"),
         "tasks": []
     }
     return ai_ready_json
@@ -43,7 +42,6 @@ if recipe_json:
     print("Recipe JSON ready for AI:\n")
     print(json.dumps(recipe_json, indent=2))
 
-    # Optional: save to file
     with open("recipe.json", "w", encoding="utf-8") as f:
         json.dump(recipe_json, f, indent=2, ensure_ascii=False)
     print("\nRecipe JSON saved to recipe.json")

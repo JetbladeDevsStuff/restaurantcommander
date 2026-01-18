@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from dotenv import load_dotenv
 
 app = FastAPI()
-<<<<<<< HEAD
 
 # Draft AI-generated recipe data (mock)
 recipe_data = {
@@ -24,9 +23,6 @@ recipe_data = {
 
 # Track user progress
 user_progress = {}
-=======
-load_dotenv()
->>>>>>> d5f5fb412b37feaf9505b976349dbfae610fdad1
 
 @app.get("/")
 def read_root():

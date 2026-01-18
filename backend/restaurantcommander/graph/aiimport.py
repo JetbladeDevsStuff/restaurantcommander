@@ -1,7 +1,7 @@
 import os
 from typing import List
 from pydantic import BaseModel
-from google import genai
+from google import gemini
 from dotenv import load_dotenv
 
 load_dotenv()
