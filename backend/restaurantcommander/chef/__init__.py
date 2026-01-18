@@ -8,10 +8,12 @@ import networkx as nx
 class Chef:
     name: str
     tasks: list[str]
+    step: int
 
 def create_stepgraph(graph: Graph) -> nx.DiGraph:
     step_graph = nx.line_graph(graph.graph)
-    step_graph = nx.relabel_nodes(step_graph, {edge: graph.graph.edges[edge].get("data", edge).process for edge in graph.graph.edges})
+    # FIXME: This is probably wrong!!!
+    return nx.relabel_nodes(step_graph, {edge: graph.graph.edges[edge].get("data", edge).process for edge in graph.graph.edges})
 
 
 def topo_layers(G: nx.DiGraph) -> list:

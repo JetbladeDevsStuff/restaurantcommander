@@ -26,6 +26,8 @@ class Graph:
     name: str
     nodes: dict[int, Node]
     graph: nx.DiGraph
+    image: str
+    description: str
 
     def __init__(self, name: str, nodes: dict[int, Node], graph: nx.DiGraph) -> None:
         self.name = name
