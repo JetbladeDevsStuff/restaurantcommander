@@ -3,12 +3,13 @@ from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-from restaurantcommander.chef import Chef
 
 from .state import State
 from .graph.manualimport import GraphDict, graph_from_dict
 from .graph.aiimport import graph_from_description_ai
 from .chef import create_stepgraph, split_graph_among_chefs, topo_layers
+from .graph.mealdbimport import graph_from_mealdb
+from .chef import Chef
 
 import networkx
 
@@ -67,7 +68,7 @@ def get_user(user_id: int):
 
 @app.get("/user/{user_id}/tasks")
 def get_user_tasks(user_id: int):
-    if user_id > len(curstate.chefs):
+    if user_id < 0 or user_id >= len(curstate.chefs):
         raise HTTPException(status_code=404, detail="user_id not found")
     return curstate.chefs[user_id].tasks
 
@@ -76,7 +77,7 @@ class SetUsername(BaseModel):
 
 @app.post("/user/{user_id}/username")
 def set_username(user_id: int, username: SetUsername):
-    if user_id > len(curstate.chefs):
+    if user_id < 0 or user_id >= len(curstate.chefs):
         raise HTTPException(status_code=404, detail="user_id not found")
     curstate.chefs[user_id].name = username.username
 
@@ -86,6 +87,7 @@ def make_user():
     curstate.chefs.append(Chef())
     id = len(curstate.chefs) - 1
     curstate.chefs[id].name = f"Chef {id}"
+    recipe_split_to_chefs()
     return {"user_id": id, "username": f"Chef {id}"}
 
 
@@ -94,6 +96,7 @@ def delete_user():
     if not curstate.chefs:
         raise HTTPException(status_code=404, detail="No users")
     chef = curstate.chefs.pop()
+    recipe_split_to_chefs()
     return {"user_id": len(curstate.chefs), "username": chef.name}
 
 
@@ -104,8 +107,10 @@ class SetManual(BaseModel):
 
 # Updates curstate.chefs with the new recipe
 def recipe_split_to_chefs():
-    # TODO: This
-    pass
+        num_chefs = len(curstate.chefs)
+        if num_chefs == 0:
+            return
+        split_graph_among_chefs(curstate.recipe, curstate.chefs)
 
 
 @app.post("/recipe/set/manual")
@@ -133,7 +138,13 @@ class SetMealDB(BaseModel):
 @app.post("/recipe/set/mealdb")
 async def recipe_set_mealdb(name: SetMealDB):
     # TODO: This
-    pass
+    try:
+        recipe_graph = await graph_from_mealdb(name.name)
+    except RuntimeError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+    curstate.recipe = recipe_graph
+    recipe_split_to_chefs()
+    
 
 
 @app.get("/recipe")

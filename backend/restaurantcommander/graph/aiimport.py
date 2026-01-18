@@ -42,6 +42,7 @@ Rules:
 - Mark raw inputs is_original=true.
 - Mark final dish is_final=true.
 - No markdown, no extra text.
+- Make sure to use every ingredient in a step towards the final dish.
 """
 
 
